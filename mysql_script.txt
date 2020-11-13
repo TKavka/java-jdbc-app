@@ -1,0 +1,63 @@
+DROP DATABASE IF EXISTS botscrew_db;
+CREATE DATABASE botscrew_db;
+USE botscrew_db;
+
+DROP TABLE IF EXISTS lector;
+DROP TABLE IF EXISTS department;
+DROP TABLE IF EXISTS lector_department;
+
+
+CREATE TABLE lector (
+	id INT AUTO_INCREMENT,
+	first_name VARCHAR(20),
+	last_name VARCHAR(20),
+    salary DOUBLE,
+    degree_name VARCHAR(20),
+    PRIMARY KEY (id)
+);
+
+CREATE TABLE department (
+	id INT AUTO_INCREMENT,
+	name VARCHAR(20) NOT NULL,
+    head VARCHAR(20) NOT NULL,
+    PRIMARY KEY(id)
+);
+
+CREATE TABLE lector_department (
+	lector_id INT,
+    department_id INT,
+    PRIMARY KEY (lector_id, department_id),
+    FOREIGN KEY (lector_id) REFERENCES lector (id),
+    FOREIGN KEY (department_id) REFERENCES department (id)
+);
+
+INSERT INTO lector (first_name, last_name, salary, degree_name)
+VALUES 
+("Taras", "Kavkalo", 1003.5, "assistant"),
+("Maria", "Polyova", 3500.5, "associate professor"),
+("Daryna", "Brahar", 6000, "professor"),
+("Andiy", "Kachur", 5000, "professor"),
+("Vladyslav", "Zavorotnii", 4000, "professor"),
+("Roman", "Marchyk", 2500, "associate professor");
+
+INSERT INTO department (name, head) 
+VALUES 
+("first department", "Oleksiy Boreiko"),
+("second department", "Diana Danilyuk");
+
+INSERT INTO lector_department 
+VALUES 
+(1, 2), (2, 1), (3, 1), (3, 2), 
+(4, 1), (1, 1), (5, 2), (6, 2);
+
+
+
+
+
+
+
+
+
+
+
+
