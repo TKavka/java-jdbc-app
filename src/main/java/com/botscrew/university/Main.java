@@ -8,18 +8,18 @@ import java.util.Scanner;
 
 public class Main {
     private static final String URL = "jdbc:mysql://localhost:3306/botscrew_db?useSSL=false";
-    private static final String USERNAME = "add_your_username";
-    private static final String PASSWORD = "add_your_password";
+    private static final String USERNAME = "botscrew";
+    private static final String PASSWORD = "tiric2001";
     private static final String firstCaseQuery = "SELECT department.head FROM department WHERE department.name=?";
     private static final String secondCaseQuery =
             "SELECT degree_name, count(degree_name) " +
-            "FROM lector " +
-            "LEFT JOIN lector_department AS ld " +
-            "ON lector.id = ld.lector_id " +
-            "LEFT JOIN department " +
-            "ON ld.department_id = department.id " +
-            "WHERE department.name = ? " +
-            "GROUP BY degree_name";
+                    "FROM lector " +
+                    "LEFT JOIN lector_department AS ld " +
+                    "ON lector.id = ld.lector_id " +
+                    "LEFT JOIN department " +
+                    "ON ld.department_id = department.id " +
+                    "WHERE department.name = ? " +
+                    "GROUP BY degree_name";
     private static final String thirdCaseQuery = "" +
             "SELECT AVG(salary) " +
             "FROM lector " +
@@ -47,16 +47,15 @@ public class Main {
             "OR last_name RLIKE ? " +
             "GROUP BY lector.id";
 
-    public static ResultSet getDataByDepartmentName(Connection connection, PreparedStatement statement, String query, String departmentName) throws SQLException {
-        statement = connection.prepareStatement(query);
+    public static ResultSet getDataByDepartmentName(Connection connection, PreparedStatement statement, String departmentName) throws SQLException {
+
         statement.setString(1, departmentName);
         ResultSet resultSet = statement.executeQuery();
+
         return resultSet;
     }
 
-    public static ResultSet globalDataSearch(Connection connection, PreparedStatement statement, String query, String searchTemplate) throws SQLException {
-        statement = connection.prepareStatement(query);
-
+    public static ResultSet globalDataSearch(Connection connection, PreparedStatement statement, String searchTemplate) throws SQLException {
         statement.setString(1, searchTemplate);
         statement.setString(2, searchTemplate);
         ResultSet resultSet = statement.executeQuery();
@@ -74,12 +73,10 @@ public class Main {
             e.printStackTrace();
         }
 
+        String departmentName = "";
+        boolean flag = true;
+
         try (Connection connection = DriverManager.getConnection(URL, USERNAME, PASSWORD)) {
-            PreparedStatement statement = null;
-            String departmentName = "";
-
-            boolean flag = true;
-
             do {
                 System.out.println("\n\n1.Show who is head of department");
                 System.out.println("2.Show department statistics");
@@ -88,73 +85,119 @@ public class Main {
                 System.out.println("5.Global search");
                 System.out.println("6.Exit\n");
 
-                System.out.print("Make your choice: ");
-                int choice = in.nextInt();
-                in.nextLine();
-
+                int choice = 0;
+                try {
+                    System.out.print("Make your choice: ");
+                    choice = in.nextInt();
+                    in.nextLine();
+                    if (choice <= 0 || choice > 6) {
+                        throw new Exception();
+                    }
+                } catch (Exception e) {
+                    System.out.println("Invalid value type or value is <= 0 or > 6");
+                    flag = false;
+                }
 
 
                 switch (choice) {
                     case 1: {
-                        System.out.print("Enter department name: ");
+                        System.out.print("\nEnter department name: ");
                         departmentName = in.nextLine();
 
-                        ResultSet resultSet = getDataByDepartmentName(connection, statement, firstCaseQuery, departmentName);;
+                        try (PreparedStatement statement = connection.prepareStatement(firstCaseQuery);
+                             ResultSet resultSet = getDataByDepartmentName(connection, statement, departmentName)) {
 
-                        while (resultSet.next()) {
-                            String name = resultSet.getString(1);
-                            System.out.println("Head of " + departmentName + " department is " + resultSet.getString(1));
+                            if (!resultSet.next()) {
+                                System.out.println("Department not exists");
+                            } else {
+                                do {
+                                    String name = resultSet.getString(1);
+                                    System.out.println("Head of " + departmentName + " department is " + resultSet.getString(1));
+                                } while (resultSet.next());
+                            }
+
+                        } catch (SQLException e) {
+                            e.printStackTrace();
                         }
                         break;
                     }
                     case 2: {
-                        System.out.print("Enter department name: ");
+                        System.out.print("\nEnter department name: ");
                         departmentName = in.nextLine();
-                        System.out.println("\n" + departmentName + " statistic:");
 
-                        ResultSet resultSet = getDataByDepartmentName(connection, statement, secondCaseQuery, departmentName);
-
-                        while (resultSet.next()) {
-                            String name = resultSet.getString(1);
-                            Integer totalCount = resultSet.getInt(2);
-                            System.out.println(name + " : " + totalCount);
+                        try (PreparedStatement statement = connection.prepareStatement(secondCaseQuery);
+                             ResultSet resultSet = getDataByDepartmentName(connection, statement, departmentName)) {
+                            if (!resultSet.next()) {
+                                System.out.println("Department not exists");
+                            } else {
+                                System.out.println(departmentName + " statistic:");
+                                do {
+                                    String name = resultSet.getString(1);
+                                    Integer totalCount = resultSet.getInt(2);
+                                    System.out.println(name + " : " + totalCount);
+                                } while (resultSet.next());
+                            }
+                        } catch (SQLException e) {
+                            e.printStackTrace();
                         }
+
                         break;
                     }
 
                     case 3: {
                         DecimalFormat df = new DecimalFormat("###.##");
-                        System.out.print("Enter department name: ");
+                        System.out.print("\nEnter department name: ");
                         departmentName = in.nextLine();
-                        ResultSet resultSet = getDataByDepartmentName(connection, statement, thirdCaseQuery, departmentName);
-                        while (resultSet.next()) {
 
-                            System.out.println("Avg salary: " + df.format(resultSet.getDouble(1)));
+                        try (PreparedStatement statement = connection.prepareStatement(thirdCaseQuery);
+                             ResultSet resultSet = getDataByDepartmentName(connection, statement, departmentName)) {
+                            while (resultSet.next()) {
+                                double salary = resultSet.getDouble(1);
+                                System.out.println(salary != 0 ?
+                                        "Avg salary: " + df.format(salary) : "Department not exists");
+
+                            }
+                        } catch (SQLException e) {
+                            e.printStackTrace();
                         }
+
                         break;
                     }
                     case 4: {
-                        System.out.print("Enter department name: ");
+                        System.out.print("\nEnter department name: ");
                         departmentName = in.nextLine();
 
-                        ResultSet resultSet = getDataByDepartmentName(connection, statement, forthCaseQuery, departmentName);
-
-                        while (resultSet.next()) {
-                            Integer totalCount = resultSet.getInt(1);
-                            System.out.println("Count of employees: " + totalCount);
+                        try (PreparedStatement statement = connection.prepareStatement(forthCaseQuery);
+                             ResultSet resultSet = getDataByDepartmentName(connection, statement, departmentName)) {
+                            while (resultSet.next()) {
+                                int totalCount = resultSet.getInt(1);
+                                System.out.println(totalCount != 0 ?
+                                        "Count of employees: " + totalCount : "Department not exists");
+                            }
+                        } catch (SQLException e) {
+                            e.printStackTrace();
                         }
                         break;
                     }
                     case 5: {
-                        System.out.print("Enter search template: ");
+                        System.out.print("\nEnter search template: ");
                         String searchTemplate = in.nextLine();
 
-                        ResultSet resultSet = globalDataSearch(connection, statement, fifthCaseQuery, searchTemplate);
+                        try (PreparedStatement statement = connection.prepareStatement(fifthCaseQuery);
+                             ResultSet resultSet = globalDataSearch(connection, statement, searchTemplate)) {
 
-                        System.out.println("Search results:");
-                        while (resultSet.next()) {
-                            String searchResults = resultSet.getString(1) + " " + resultSet.getString(2);
-                            System.out.println(searchResults);
+                            if (!resultSet.next()) {
+                                System.out.println("Not found any value by template");
+                            } else {
+                                System.out.println("\nSearch results:");
+                                do {
+                                    String searchResults = resultSet.getString(1) + " " + resultSet.getString(2);
+                                    System.out.println(searchResults);
+                                } while (resultSet.next());
+                            }
+
+                        } catch (SQLException e) {
+                            e.printStackTrace();
                         }
                         break;
                     }
@@ -167,6 +210,5 @@ public class Main {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-
     }
 }
