@@ -1,2 +1,2 @@
 # java-jdbc-app
-Test task for BotsCrew using java, jdbc + mysql
+Console app for tracking departments and lectors at the university implemented using Java, JDBC + MySQL
